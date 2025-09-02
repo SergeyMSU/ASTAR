@@ -20,9 +20,10 @@ int main()
 
     S1.Init_boundary_grans(); 
     S1.Init_TVD();
-    S1.Init_physics(); 
 
-    //S1.Download_cell_parameters("paramet_0003.bin");   // 23
+    S1.Download_cell_parameters("paramet_0001.bin");   // 23
+    S1.phys_param->T_all = 0;
+    S1.Init_physics();
 
 
     while (S1.phys_param->T_all < 12.0)
@@ -40,12 +41,12 @@ int main()
         S1.Tecplot_print_2D_sphere(121, "move_Sphere_75", false, true);
         S1.Tecplot_print_2D_sphere(121, "Sphere_75", false, false);
 
-        S1.Save_cell_parameters("paramet_0001-.bin");
+        S1.Save_cell_parameters("paramet_0002-.bin");
     }
 
     cout << "TIME = " << S1.phys_param->T_all << endl;
 
-    S1.Save_cell_parameters("paramet_0001.bin");
+    S1.Save_cell_parameters("paramet_0002.bin");
 
     S1.Save_for_interpolate("For_intertpolate_1.bin", true);
     Interpol SS = Interpol("For_intertpolate_1.bin");

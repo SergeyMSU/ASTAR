@@ -171,7 +171,7 @@ void Setka::Init_physics(void)
 
 
 	// Задаём начальные условия на сетке
-	if (true)
+	if (false)
 	{
 		for (auto& i : this->All_Cell)
 		{
