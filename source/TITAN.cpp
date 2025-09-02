@@ -22,11 +22,11 @@ int main()
     S1.Init_TVD();
 
     S1.Download_cell_parameters("paramet_0001.bin");   // 23
-    S1.phys_param->T_all = 0;
+    //S1.phys_param->T_all = 0;
     S1.Init_physics();
 
 
-    while (S1.phys_param->T_all < 12.0)
+    while (S1.phys_param->T_all < 24.0)
     {
         auto start = std::chrono::high_resolution_clock::now();
         S1.Go(false, 2000, 1); // 400   1
