@@ -317,6 +317,8 @@ Phys_param::Phys_param()
             this->n_p_cm3.push_back(np);
             this->V_kms.push_back(v);
             this->T_K.push_back(t);
+
+            cout << hlat << " " << np << " " << v << " " << t << endl;
         }
     }
 
@@ -701,7 +703,8 @@ double Phys_param::Get_v_0(const double& the)
 
     // Поиск ближайших точек
     size_t i = 0;
-    while (i < angles.size() - 1 && angles[i + 1] < the) {
+    while (i < angles.size() - 1 && angles[i + 1] < the) 
+    {
         i++;
     }
 

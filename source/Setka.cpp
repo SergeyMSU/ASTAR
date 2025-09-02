@@ -4044,7 +4044,23 @@ void Setka::Tecplot_print_2D_sphere(int SS, string name, bool razmer, bool moove
 			double the_1 = acos(z / r_1);
 			double phi_1 = polar_angle(x, y);
 
-			fout << phi_1 << " " << the_1;
+			std::array<double, 5> phi;
+			std::array<double, 5> the;
+
+			phi[0] = phi_1;
+			the[0] = the_1;
+
+			phi[1] = phi_1 + const_pi * 2;
+			the[1] = the_1;
+
+			phi[2] = phi_1 - const_pi * 2;
+			the[2] = the_1;
+
+			phi[3] = phi_1;
+			the[3] = 2 * const_pi - the_1;
+
+			phi[4] = phi_1;
+			the[4] = -the_1;
 
 			Eigen::Vector3d VV1(cell->parameters[0]["Vx"], cell->parameters[0]["Vy"], cell->parameters[0]["Vz"]);
 			if (moove_system == false)
@@ -4055,30 +4071,36 @@ void Setka::Tecplot_print_2D_sphere(int SS, string name, bool razmer, bool moove
 					rotationMatrixX(-this->phys_param->lambda) * VV + point.cross(C);
 			}
 
-			for (auto& nam : this->phys_param->param_names)
+			
+			for (int ii = 0; ii < 5; ii++)
 			{
-				if (nam == "Vx")
-				{
-					fout << " " << VV1[0];
-				}
-				else if (nam == "Vy")
-				{
-					fout << " " << VV1[1];
-				}
-				else if (nam == "Vz")
-				{
-					fout << " " << VV1[2];
-				}
-				else
-				{
-					fout << " " << cell->parameters[0][nam];
-				}
-			}
+				fout << phi[ii] << " " << the[ii];
 
-			double VV = norm2(VV1[0], VV1[1], VV1[2]);
-			double BB = kvv(cell->parameters[0]["Bx"], cell->parameters[0]["By"], 
-				cell->parameters[0]["Bz"])/8.0/const_pi;
-			fout << " " << VV << " " << BB << endl;
+				for (auto& nam : this->phys_param->param_names)
+				{
+					if (nam == "Vx")
+					{
+						fout << " " << VV1[0];
+					}
+					else if (nam == "Vy")
+					{
+						fout << " " << VV1[1];
+					}
+					else if (nam == "Vz")
+					{
+						fout << " " << VV1[2];
+					}
+					else
+					{
+						fout << " " << cell->parameters[0][nam];
+					}
+				}
+
+				double VV = norm2(VV1[0], VV1[1], VV1[2]);
+				double BB = kvv(cell->parameters[0]["Bx"], cell->parameters[0]["By"],
+					cell->parameters[0]["Bz"]) / 8.0 / const_pi;
+				fout << " " << VV << " " << BB << endl;
+			}
 
 		}
 	}
@@ -4112,7 +4134,23 @@ void Setka::Tecplot_print_2D_sphere(int SS, string name, bool razmer, bool moove
 		double the_1 = acos(z / r_1);
 		double phi_1 = polar_angle(x, y);
 
-		fout << phi_1 << " " << the_1;
+		std::array<double, 5> phi;
+		std::array<double, 5> the;
+
+		phi[0] = phi_1;
+		the[0] = the_1;
+
+		phi[1] = phi_1 + const_pi * 2;
+		the[1] = the_1;
+
+		phi[2] = phi_1 - const_pi * 2;
+		the[2] = the_1;
+
+		phi[3] = phi_1;
+		the[3] = const_pi - the_1;
+
+		phi[4] = phi_1;
+		the[4] = -the_1;
 
 		Eigen::Vector3d VV1(cell->parameters[0]["Vx"], cell->parameters[0]["Vy"], cell->parameters[0]["Vz"]);
 		if (moove_system == false)
@@ -4123,30 +4161,37 @@ void Setka::Tecplot_print_2D_sphere(int SS, string name, bool razmer, bool moove
 				rotationMatrixX(-this->phys_param->lambda) * VV + point.cross(C);
 		}
 
-		for (auto& nam : this->phys_param->param_names)
-		{
-			if (nam == "Vx")
-			{
-				fout << " " << VV1[0];
-			}
-			else if (nam == "Vy")
-			{
-				fout << " " << VV1[1];
-			}
-			else if (nam == "Vz")
-			{
-				fout << " " << VV1[2];
-			}
-			else
-			{
-				fout << " " << cell->parameters[0][nam];
-			}
-		}
 
-		double VV = norm2(cell->parameters[0]["Vx"], cell->parameters[0]["Vy"], cell->parameters[0]["Vz"]);
-		double BB = kvv(cell->parameters[0]["Bx"], cell->parameters[0]["By"],
-			cell->parameters[0]["Bz"]) / 8.0 / const_pi;
-		fout << " " << VV << " " << BB << endl;
+		for (int ii = 0; ii < 5; ii++)
+		{
+			fout << phi[ii] << " " << the[ii];
+
+
+			for (auto& nam : this->phys_param->param_names)
+			{
+				if (nam == "Vx")
+				{
+					fout << " " << VV1[0];
+				}
+				else if (nam == "Vy")
+				{
+					fout << " " << VV1[1];
+				}
+				else if (nam == "Vz")
+				{
+					fout << " " << VV1[2];
+				}
+				else
+				{
+					fout << " " << cell->parameters[0][nam];
+				}
+			}
+
+			double VV = norm2(cell->parameters[0]["Vx"], cell->parameters[0]["Vy"], cell->parameters[0]["Vz"]);
+			double BB = kvv(cell->parameters[0]["Bx"], cell->parameters[0]["By"],
+				cell->parameters[0]["Bz"]) / 8.0 / const_pi;
+			fout << " " << VV << " " << BB << endl;
+		}
 
 	}
 
@@ -4178,7 +4223,23 @@ void Setka::Tecplot_print_2D_sphere(int SS, string name, bool razmer, bool moove
 		double the_1 = acos(z / r_1);
 		double phi_1 = polar_angle(x, y);
 
-		fout << phi_1 << " " << the_1;
+		std::array<double, 5> phi;
+		std::array<double, 5> the;
+
+		phi[0] = phi_1;
+		the[0] = the_1;
+
+		phi[1] = phi_1 + const_pi * 2;
+		the[1] = the_1;
+
+		phi[2] = phi_1 - const_pi * 2;
+		the[2] = the_1;
+
+		phi[3] = phi_1;
+		the[3] = const_pi - the_1;
+
+		phi[4] = phi_1;
+		the[4] = -the_1;
 
 		Eigen::Vector3d VV1(cell->parameters[0]["Vx"], cell->parameters[0]["Vy"], cell->parameters[0]["Vz"]);
 		if (moove_system == false)
@@ -4189,30 +4250,38 @@ void Setka::Tecplot_print_2D_sphere(int SS, string name, bool razmer, bool moove
 				rotationMatrixX(-this->phys_param->lambda) * VV + point.cross(C);
 		}
 
-		for (auto& nam : this->phys_param->param_names)
-		{
-			if (nam == "Vx")
-			{
-				fout << " " << VV1[0];
-			}
-			else if (nam == "Vy")
-			{
-				fout << " " << VV1[1];
-			}
-			else if (nam == "Vz")
-			{
-				fout << " " << VV1[2];
-			}
-			else
-			{
-				fout << " " << cell->parameters[0][nam];
-			}
-		}
 
-		double VV = norm2(cell->parameters[0]["Vx"], cell->parameters[0]["Vy"], cell->parameters[0]["Vz"]);
-		double BB = kvv(cell->parameters[0]["Bx"], cell->parameters[0]["By"],
-			cell->parameters[0]["Bz"]) / 8.0 / const_pi;
-		fout << " " << VV << " " << BB << endl;
+		for (int ii = 0; ii < 5; ii++)
+		{
+			fout << phi[ii] << " " << the[ii];
+
+
+
+			for (auto& nam : this->phys_param->param_names)
+			{
+				if (nam == "Vx")
+				{
+					fout << " " << VV1[0];
+				}
+				else if (nam == "Vy")
+				{
+					fout << " " << VV1[1];
+				}
+				else if (nam == "Vz")
+				{
+					fout << " " << VV1[2];
+				}
+				else
+				{
+					fout << " " << cell->parameters[0][nam];
+				}
+			}
+
+			double VV = norm2(cell->parameters[0]["Vx"], cell->parameters[0]["Vy"], cell->parameters[0]["Vz"]);
+			double BB = kvv(cell->parameters[0]["Bx"], cell->parameters[0]["By"],
+				cell->parameters[0]["Bz"]) / 8.0 / const_pi;
+			fout << " " << VV << " " << BB << endl;
+		}
 
 	}
 

@@ -243,6 +243,13 @@ void Setka::Init_physics(void)
 	// Задаём граничные условия (на граничных гранях)
 	if (true)
 	{
+		ofstream fout1;
+		fout1.open("gran_yslov.txt");
+
+		fout1 << "TITLE = HP" << endl;
+		fout1 << "VARIABLES = the, rho, |V|" << endl;
+
+
 		for (auto& i : this->All_boundary_Gran)
 		{
 			if(i->type == Type_Gran::Inner_Hard)
@@ -272,10 +279,12 @@ void Setka::Init_physics(void)
 
 					the = -the + const_pi / 2.0;   // Т.к.в данных по СВ на 1 а.е.угол от - 90 до 90 у Алексашова
 
-					double mrho = this->phys_param->Get_rho_0(the) * 62.0 / 370.0;
-					double mv = this->phys_param->Get_v_0(the) * 266.0 / 45000000.0;
-					double mp = mv * mv * mrho / (this->phys_param->gamma * 2.56 * 2.56);
+					double mrho = this->phys_param->Get_rho_0(the/const_pi * 180.0) / 5.9276;
+					double mv = this->phys_param->Get_v_0(the / const_pi * 180.0) / 450.0;
+					double mp = mv * mv * mrho * pow(this->phys_param->R_0 / r, 2)
+						/ (this->phys_param->gamma * 2.56 * 2.56);
 
+					//cout << "RR = " << r << " " << pow(this->phys_param->R_0 / r, 2) << endl;
 
 					i->parameters["rho"] = mrho * pow(this->phys_param->R_0 / r, 2);
 					i->parameters["p"] = mp *
@@ -285,6 +294,9 @@ void Setka::Init_physics(void)
 					i->parameters["Vx"] = mv * vec(0) / r;
 					i->parameters["Vy"] = mv * vec(1) / r;
 					i->parameters["Vz"] = mv * vec(2) / r;
+
+					fout1 << the << " " << i->parameters["rho"] << " " <<
+						norm2(i->parameters["Vx"], i->parameters["Vy"], i->parameters["Vz"]) << endl;
 
 					if (the > 0.0)
 					{
@@ -301,6 +313,8 @@ void Setka::Init_physics(void)
 				}
 			}
 		}
+
+		fout1.close();
 	}
 }
 
@@ -1137,7 +1151,7 @@ void Setka::Go(bool is_inner_area, size_t steps__, short int metod)
 
 	for (unsigned int step = 1; step <= steps; step++)
 	{
-		if (this->phys_param->T_all >= 12.0) break;
+		if (this->phys_param->T_all >= 24.0) break;
 
 		if (step % 250 == 0)
 		{

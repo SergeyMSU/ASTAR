@@ -24,9 +24,9 @@ int main()
     S1.Download_cell_parameters("paramet_0001.bin");   // 23
     //S1.phys_param->T_all = 0;
     S1.Init_physics();
+    return 0;
 
-
-    while (S1.phys_param->T_all < 24.0)
+    while (S1.phys_param->T_all < 0.0)
     {
         auto start = std::chrono::high_resolution_clock::now();
         S1.Go(false, 2000, 1); // 400   1
@@ -46,10 +46,20 @@ int main()
 
     cout << "TIME = " << S1.phys_param->T_all << endl;
 
-    S1.Save_cell_parameters("paramet_0002.bin");
+    //S1.Save_cell_parameters("paramet_0002.bin");
 
-    S1.Save_for_interpolate("For_intertpolate_1.bin", true);
-    Interpol SS = Interpol("For_intertpolate_1.bin");
+    S1.Save_for_interpolate("For_intertpolate_11.bin", true);
+    Interpol SS = Interpol("For_intertpolate_11.bin");
+
+    S1.Tecplot_print_2D_sphere(0, "move_Sphere_0", false, true);
+    S1.Tecplot_print_2D_sphere(0, "Sphere_0", false, false);
+
+    S1.Tecplot_print_2D_sphere(1, "move_Sphere_1", false, true);
+    S1.Tecplot_print_2D_sphere(1, "Sphere_1", false, false);
+
+    S1.Tecplot_print_2D_sphere(2, "move_Sphere_2", false, true);
+    S1.Tecplot_print_2D_sphere(2, "Sphere_2", false, false);
+
 
 
     S1.Tecplot_print_2D(&SS, 0.0, 0.0, 1.0, -0.00001, "XYZ_2d_(0, 0, 1, 0)_", false, false);
