@@ -44,3 +44,9 @@ ASTAR/.vs/ASTAR/v17/.suo
 *.exe
 
 *.dll
+
+*.db-shm
+
+*.db-wal
+
+*.opendb
