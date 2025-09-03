@@ -1154,7 +1154,7 @@ void Setka::Go(bool is_inner_area, size_t steps__, short int metod)
 	{
 		if (this->phys_param->T_all >= 24.0) break;
 
-		if (step % 250 == 0)
+		if (step % 1 == 0)
 		{
 			cout << "Global step = " << step << endl;
 			whach(time);

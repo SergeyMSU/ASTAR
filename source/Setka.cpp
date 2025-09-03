@@ -1829,7 +1829,8 @@ void Setka::Write_file_for_FCMHD(void)
 	{
 		for (short int k = 0; k < 2; k++)
 		{
-			auto cc = this->All_Gran[i]->cells[k];
+			Cell* cc = nullptr;
+			if(this->All_Gran[i]->cells.size() >= k + 1) cc = this->All_Gran[i]->cells[k];
 			int value = 0;
 			if (cc != nullptr)
 			{
@@ -1839,6 +1840,8 @@ void Setka::Write_file_for_FCMHD(void)
 			if (value > host_N_cell)
 			{
 				cout << "ERROR 38u4rh8fur   " << value << " " << host_N_cell << endl;
+				cout << cc->number << endl;
+				cout << this->All_Gran[i]->cells.size() << endl;
 				exit(-1);
 			}
 			file.write(reinterpret_cast<const char*>(&value), sizeof(int));
@@ -1850,7 +1853,8 @@ void Setka::Write_file_for_FCMHD(void)
 	{
 		for (short int k = 0; k < 2; k++)
 		{
-			auto cc = this->All_Gran[i]->cells_TVD[k];
+			Cell* cc = nullptr;
+			if (this->All_Gran[i]->cells_TVD.size() >= k + 1) cc = this->All_Gran[i]->cells_TVD[k];
 			int value = 0;
 			if (cc != nullptr)
 			{
@@ -1860,6 +1864,13 @@ void Setka::Write_file_for_FCMHD(void)
 			if (i == 1)
 			{
 				cout << "S2 - " << value << endl;
+			}
+
+			if (value < 0 || value > host_N_cell)
+			{
+				cout << "ERRORRcv 8u39874fy8eh" << endl;
+				cout << value << endl;
+				exit(-1);
 			}
 
 			file.write(reinterpret_cast<const char*>(&value), sizeof(int));
