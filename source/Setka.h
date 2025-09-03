@@ -118,6 +118,9 @@ public:
 	// «десь также задаЄтс€ тиа €чеек (к какой зоне относитс€)
 
 
+	void Write_file_for_FCMHD(void);
+
+
 	void Calculating_measure(unsigned short int st_time);
 	// ¬ычисление площадей, центров и нормалей граней, объЄмов и центров €чеек
 

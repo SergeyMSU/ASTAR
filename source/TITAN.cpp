@@ -21,9 +21,11 @@ int main()
     S1.Init_boundary_grans(); 
     S1.Init_TVD();
 
-    S1.Download_cell_parameters("paramet_0001.bin");   // 23
-    //S1.phys_param->T_all = 0;
+    //S1.Download_cell_parameters("paramet_0001.bin");   // 23
+    S1.phys_param->T_all = 0;
     S1.Init_physics();
+
+    S1.Write_file_for_FCMHD();
     return 0;
 
     while (S1.phys_param->T_all < 0.0)

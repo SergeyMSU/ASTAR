@@ -288,21 +288,21 @@ Cell* Setka::Find_cell_point(const double& x, const double& y, const double& z, 
 
 void Setka::Renumerate(void)
 {
-	int kkk = 1;
+	int kkk = 0;
 	for (auto& i : this->All_Yzel)
 	{
 		i->number = kkk;
 		kkk++;
 	}
 
-	kkk = 1;
+	kkk = 0;
 	for (auto& i : this->All_Cell)
 	{
 		i->number = kkk;
 		kkk++;
 	}
 
-	kkk = 1;
+	kkk = 0;
 	for (auto& i : this->All_Gran)
 	{
 		i->number = kkk;
@@ -1094,7 +1094,7 @@ void Setka::New_initial()
 	// Перенумеровываем все узлы
 	if (true)
 	{
-		int kkk = 1;
+		int kkk = 0;
 		for (auto& i : this->All_Yzel)
 		{
 			i->number = kkk;
@@ -1409,7 +1409,7 @@ void Setka::New_connect()
 	}
 
 	// нумеруем все грани (для того, чтобы запомнить, какие надо удалить)
-	int kkk = 1;
+	int kkk = 0;
 	for (auto& i : All_gran_)
 	{
 		i->number = kkk;
@@ -1417,7 +1417,7 @@ void Setka::New_connect()
 	}
 
 	//пробегаемся по всем узлам и вычисляем грани, которые нужно удалить
-	kkk = 1;
+	kkk = 0;
 	for (auto& i : this->All_Yzel)
 	{
 		/*if (kkk % 5000 == 0)
@@ -1472,7 +1472,7 @@ void Setka::New_connect()
 	All_gran_.resize(0);
 
 	// нумеруем все грани
-	kkk = 1;
+	kkk = 0;
 	for (auto& i : this->All_Gran)
 	{
 		i->number = kkk;
@@ -1725,6 +1725,193 @@ void Setka::New_append_surfaces()
 	macros4(HP);
 	macros4(BS);
 
+}
+
+void Setka::Write_file_for_FCMHD(void)
+{
+	this->Renumerate();
+
+	ofstream file("FCMHD_1.bin", ios::binary);
+	if (!file.is_open()) 
+	{
+		cout << "ERROR FCMHD_1.bin" << endl;
+		exit(-1);
+	}
+
+	int n1 = this->All_Cell.size();
+	int n2 = this->All_Gran.size();
+
+	file.write(reinterpret_cast<const char*>(&this->phys_param->T_all), sizeof(double));
+	file.write(reinterpret_cast<const char*>(&n1), sizeof(int));
+	file.write(reinterpret_cast<const char*>(&n2), sizeof(int));
+
+	size_t host_N_cell = this->All_Cell.size();
+	size_t host_N_gran = this->All_Gran.size();
+	const vector<string> param_order = { "rho", "Vx", "Vy", "Vz", "p", "Bx", "By", "Bz" };
+
+	// host_Cell_par
+	for (size_t i = 0; i < host_N_cell; ++i)
+	{
+		for (const string& param : param_order) 
+		{
+			double value = this->All_Cell[i]->parameters[0].at(param);
+			if (i == 0)
+			{
+				cout << "S1 - " << value << endl;
+			}
+			file.write(reinterpret_cast<const char*>(&value), sizeof(double));
+		}
+	}
+
+	// host_Cell_center
+	for (size_t i = 0; i < host_N_cell; ++i)
+	{
+		for (short int k = 0; k < 3; k++) 
+		{
+			double value = this->All_Cell[i]->center[0][k];
+			file.write(reinterpret_cast<const char*>(&value), sizeof(double));
+		}
+	}
+
+	// host_Cell_Volume
+	for (size_t i = 0; i < host_N_cell; ++i)
+	{
+		for (short int k = 0; k < 1; k++)
+		{
+			double value = this->All_Cell[i]->volume[k];
+			file.write(reinterpret_cast<const char*>(&value), sizeof(double));
+		}
+	}
+
+	// host_Cell_gran
+	for (size_t i = 0; i < host_N_cell; ++i)
+	{
+		for (short int k = 0; k < 6; k++)
+		{
+			int value = this->All_Cell[i]->grans[k]->number + 1;
+			file.write(reinterpret_cast<const char*>(&value), sizeof(int));
+		}
+	}
+
+	// host_Gran_normal
+	for (size_t i = 0; i < host_N_gran; ++i)
+	{
+		for (short int k = 0; k < 3; k++)
+		{
+			double value = this->All_Gran[i]->normal[0][k];
+			file.write(reinterpret_cast<const char*>(&value), sizeof(double));
+		}
+	}
+
+	// host_Gran_square
+	for (size_t i = 0; i < host_N_gran; ++i)
+	{
+		for (short int k = 0; k < 1; k++)
+		{
+			double value = this->All_Gran[i]->area[0];
+			file.write(reinterpret_cast<const char*>(&value), sizeof(double));
+		}
+	}
+
+
+	// host_Gran_center
+	for (size_t i = 0; i < host_N_gran; ++i)
+	{
+		for (short int k = 0; k < 3; k++)
+		{
+			double value = this->All_Gran[i]->center[0][k];
+			file.write(reinterpret_cast<const char*>(&value), sizeof(double));
+		}
+	}
+
+	// host_Gran_neighbour
+	for (size_t i = 0; i < host_N_gran; ++i)
+	{
+		for (short int k = 0; k < 2; k++)
+		{
+			auto cc = this->All_Gran[i]->cells[k];
+			int value = 0;
+			if (cc != nullptr)
+			{
+				value = cc->number + 1;
+			}
+
+			if (value > host_N_cell)
+			{
+				cout << "ERROR 38u4rh8fur   " << value << " " << host_N_cell << endl;
+				exit(-1);
+			}
+			file.write(reinterpret_cast<const char*>(&value), sizeof(int));
+		}
+	}
+
+	// host_Gran_neighbour_TVD
+	for (size_t i = 0; i < host_N_gran; ++i)
+	{
+		for (short int k = 0; k < 2; k++)
+		{
+			auto cc = this->All_Gran[i]->cells_TVD[k];
+			int value = 0;
+			if (cc != nullptr)
+			{
+				value = cc->number + 1;
+			}
+
+			if (i == 1)
+			{
+				cout << "S2 - " << value << endl;
+			}
+
+			file.write(reinterpret_cast<const char*>(&value), sizeof(int));
+		}
+	}
+	double vv = 121.0;
+	file.write(reinterpret_cast<const char*>(&vv), sizeof(double));
+
+	// host_Gran_type
+	for (size_t i = 0; i < host_N_gran; ++i)
+	{
+		for (short int k = 0; k < 1; k++)
+		{
+			auto cc = this->All_Gran[i];
+			int value = 0;
+			if (cc->type == Type_Gran::Us) value = 1;
+			if (cc->type == Type_Gran::Inner_Hard) value = 2;
+			if (cc->type == Type_Gran::Outer_Soft) value = 3;
+
+			file.write(reinterpret_cast<const char*>(&value), sizeof(int));
+		}
+	}
+
+	vv = 122.0;
+	file.write(reinterpret_cast<const char*>(&vv), sizeof(double));
+
+	const vector<string> param_order2 = { "Prho", "PVx", "PVy", "PVz", "Pp", "PBx", "PBy", "PBz", "PdivB"};
+
+	// host_Gran_POTOK
+	for (size_t i = 0; i < host_N_gran; ++i)
+	{
+		for (const string& param : param_order2)
+		{
+			auto cc = this->All_Gran[i];
+			double value = 0.0;
+			if (cc->type == Type_Gran::Inner_Hard)
+			{
+				string name;
+				// Здесь надо посчитать потоки через граничную грань (так как они всегда одинаковые, их можно посчитать один раз)
+				double time = Culc_Gran_Potok(cc, 0, 3, name, 1.0);
+				value = cc->parameters[param];
+			}
+
+			file.write(reinterpret_cast<const char*>(&value), sizeof(double));
+		}
+	}
+
+	// Проверяющий параметр
+	vv = 123.0;
+	file.write(reinterpret_cast<const char*>(&vv), sizeof(double));
+
+	file.close();
 }
 
 void Setka::Calculating_measure(unsigned short int st_time)

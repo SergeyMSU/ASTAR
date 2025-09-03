@@ -171,7 +171,7 @@ void Setka::Init_physics(void)
 
 
 	// Задаём начальные условия на сетке
-	if (false)
+	if (true)
 	{
 		for (auto& i : this->All_Cell)
 		{
@@ -203,9 +203,10 @@ void Setka::Init_physics(void)
 
 				the = -the + const_pi / 2.0;   // Т.к.в данных по СВ на 1 а.е.угол от - 90 до 90 у Алексашова
 
-				double mrho = this->phys_param->Get_rho_0(the) * 62.0 / 370.0;
-				double mv = this->phys_param->Get_v_0(the) * 266.0 / 45000000.0;
-				double mp = mv * mv * mrho / (this->phys_param->gamma * 2.56 * 2.56);
+				double mrho = this->phys_param->Get_rho_0(the / const_pi * 180.0) / 5.9276;
+				double mv = this->phys_param->Get_v_0(the / const_pi * 180.0) / 450.0;
+				double mp = mv * mv * mrho * pow(this->phys_param->R_0 / r, 2)
+					/ (this->phys_param->gamma * 2.56 * 2.56);
 
 
 				i->parameters[0]["rho"] = mrho * pow(this->phys_param->R_0 / r, 2);
