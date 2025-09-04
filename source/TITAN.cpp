@@ -26,9 +26,10 @@ int main()
     S1.Init_physics();
 
     //S1.Write_file_for_FCMHD();
+    S1.Read_file_for_FCMHD();
     // return 0;
 
-    while (S1.phys_param->T_all < 1.0)
+    while (S1.phys_param->T_all < 0.0)
     {
         auto start = std::chrono::high_resolution_clock::now();
         S1.Go(false, 2000, 1); // 400   1

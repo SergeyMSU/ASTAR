@@ -1925,6 +1925,45 @@ void Setka::Write_file_for_FCMHD(void)
 	file.close();
 }
 
+void Setka::Read_file_for_FCMHD(void)
+{
+	this->Renumerate();
+
+	std::ifstream file("FCMHD_1_out.bin", std::ios::binary);
+	if (!file.is_open()) {
+		throw std::runtime_error("Error opening file: FCMHD_1_out.bin");
+	}
+
+	int n1 = this->All_Cell.size();
+	int n2 = this->All_Gran.size();
+
+	file.read(reinterpret_cast<char*>(&this->phys_param->T_all), sizeof(double));
+
+	size_t host_N_cell = this->All_Cell.size();
+	size_t host_N_gran = this->All_Gran.size();
+	const vector<string> param_order = { "rho", "Vx", "Vy", "Vz", "p", "Bx", "By", "Bz" };
+
+	// host_Cell_par
+	for (size_t i = 0; i < host_N_cell; ++i)
+	{
+		for (const string& param : param_order)
+		{
+			double value;
+			file.read(reinterpret_cast<char*>(&value), sizeof(double));
+			this->All_Cell[i]->parameters[0][param] = value;
+		}
+	}
+
+	// Проверяющий параметр
+	double vv;
+	file.read(reinterpret_cast<char*>(&vv), sizeof(double));
+
+	cout << "Proverka (321) = " << vv << endl;
+
+	file.close();
+}
+
+
 void Setka::Calculating_measure(unsigned short int st_time)
 {
 	// Следующий блок был для тестирования
@@ -3930,10 +3969,10 @@ void Setka::Tecplot_print_2D(Interpol* Int1, const double& a,
 			{
 				double alpha = this->phys_param->T_all * this->phys_param->Omega;
 				Eigen::Vector3d point(0.0, 0.0, this->phys_param->Omega);
-				Eigen::Vector3d rotate_velosity = rotationMatrixX(this->phys_param->lambda) * // Угловая скорость (как вектор)
-					rotationMatrixZ(alpha) * point;
-				koord = rotationMatrixX(this->phys_param->lambda) * // Угловая скорость (как вектор)
-					rotationMatrixZ(alpha) * C;
+				Eigen::Vector3d rotate_velosity = // Угловая скорость (как вектор)
+					rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * point;
+				koord = // Угловая скорость (как вектор)
+					rotationMatrixX(this->phys_param->lambda) * rotationMatrixZ(alpha) * C;
 			}
 
 			fine_int = Int1->Get_param(koord(0), koord(1), koord(2), parameters, prev_cell, next_cell);
@@ -3958,12 +3997,12 @@ void Setka::Tecplot_print_2D(Interpol* Int1, const double& a,
 			double alpha;
 			if (moove_system == false)
 			{
-				alpha = this->phys_param->T_all * this->phys_param->Omega;
-				point << 0.0, 0.0, this->phys_param->Omega;
-				rotate_velosity = rotationMatrixX(this->phys_param->lambda) * // Угловая скорость (как вектор)
-					rotationMatrixZ(alpha) * point;
-				koord = rotationMatrixX(this->phys_param->lambda) *
-					rotationMatrixZ(alpha) * C;
+				double alpha = this->phys_param->T_all * this->phys_param->Omega;
+				Eigen::Vector3d point(0.0, 0.0, this->phys_param->Omega);
+				Eigen::Vector3d rotate_velosity = // Угловая скорость (как вектор)
+					rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * point;
+				koord = // Угловая скорость (как вектор)
+					rotationMatrixX(this->phys_param->lambda) * rotationMatrixZ(alpha) * C;
 			}
 
 			fine_int = Int1->Get_param(koord(0), koord(1), koord(2), parameters, prev_cell, next_cell);
@@ -3986,8 +4025,8 @@ void Setka::Tecplot_print_2D(Interpol* Int1, const double& a,
 				Eigen::Vector3d VV(parameters["Vx"], parameters["Vy"], parameters["Vz"]);
 				Eigen::Vector3d VV1;
 
-				VV1 = rotationMatrixZ(-alpha) *
-					rotationMatrixX(-this->phys_param->lambda) * VV + point.cross(C);
+				VV1 = 
+					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * VV + point.cross(C);
 
 				parameters["Vx"] = VV1[0];
 				parameters["Vy"] = VV1[1];

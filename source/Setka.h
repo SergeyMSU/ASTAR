@@ -119,6 +119,7 @@ public:
 
 
 	void Write_file_for_FCMHD(void);
+	void Read_file_for_FCMHD(void);
 
 
 	void Calculating_measure(unsigned short int st_time);
