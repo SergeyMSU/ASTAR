@@ -1168,8 +1168,8 @@ void Setka::Go(bool is_inner_area, size_t steps__, short int metod)
 		// —читаем угол поворота
 		double alpha = this->phys_param->T_all * this->phys_param->Omega;
 		Eigen::Vector3d point(0.0, 0.0, this->phys_param->Omega);
-		Eigen::Vector3d rotate_velosity = rotationMatrixX(this->phys_param->lambda) * // ”глова€ скорость (как вектор)
-			rotationMatrixZ(alpha) * point;
+		Eigen::Vector3d rotate_velosity =  // ”глова€ скорость (как вектор)
+			rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * point;
 
 		now2 = now1;
 		now1 = (now1 + 1)%2;
