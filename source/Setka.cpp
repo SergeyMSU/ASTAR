@@ -1338,6 +1338,8 @@ void Setka::New_connect()
 	vector<Gran*> All_gran_;
 	std::unordered_set<int> number_gran_for_delete;
 
+	All_gran_.reserve(this->All_Cell.size() * 6);
+
 	this->Renumerate();
 
 	// Создаём все грани
@@ -1460,7 +1462,6 @@ void Setka::New_connect()
 				G->cells.push_back(j);
 			}
 			this->All_Gran.push_back(G);
-
 		}
 		delete i;
 	}
@@ -1731,10 +1732,10 @@ void Setka::Write_file_for_FCMHD(void)
 {
 	this->Renumerate();
 
-	ofstream file("FCMHD_1.bin", ios::binary);
+	ofstream file("FCMHD_2.bin", ios::binary);
 	if (!file.is_open()) 
 	{
-		cout << "ERROR FCMHD_1.bin" << endl;
+		cout << "ERROR FCMHD_2.bin" << endl;
 		exit(-1);
 	}
 
@@ -1929,9 +1930,9 @@ void Setka::Read_file_for_FCMHD(void)
 {
 	this->Renumerate();
 
-	std::ifstream file("FCMHD_1_out.bin", std::ios::binary);
+	std::ifstream file("FCMHD_3_out.bin", std::ios::binary);
 	if (!file.is_open()) {
-		throw std::runtime_error("Error opening file: FCMHD_1_out.bin");
+		throw std::runtime_error("Error opening file: FCMHD_3_out.bin");
 	}
 
 	int n1 = this->All_Cell.size();
@@ -3972,10 +3973,10 @@ void Setka::Tecplot_print_2D(Interpol* Int1, const double& a,
 				Eigen::Vector3d rotate_velosity = // Угловая скорость (как вектор)
 					rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * point;
 				koord = // Угловая скорость (как вектор)
-					rotationMatrixX(this->phys_param->lambda) * rotationMatrixZ(alpha) * C;
+					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * C;
 			}
 
-			fine_int = Int1->Get_param(koord(0), koord(1), koord(2), parameters, prev_cell, next_cell);
+			fine_int = Int1->Get_param(C(0), C(1), C(2), parameters, prev_cell, next_cell);
 
 			if (fine_int == true) next_cell = prev_cell;
 			if (fine_int == false)
@@ -4002,10 +4003,10 @@ void Setka::Tecplot_print_2D(Interpol* Int1, const double& a,
 				Eigen::Vector3d rotate_velosity = // Угловая скорость (как вектор)
 					rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * point;
 				koord = // Угловая скорость (как вектор)
-					rotationMatrixX(this->phys_param->lambda) * rotationMatrixZ(alpha) * C;
+					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * C;
 			}
 
-			fine_int = Int1->Get_param(koord(0), koord(1), koord(2), parameters, prev_cell, next_cell);
+			fine_int = Int1->Get_param(C(0), C(1), C(2), parameters, prev_cell, next_cell);
 
 			if (fine_int == true) next_cell = prev_cell;
 
@@ -4017,7 +4018,7 @@ void Setka::Tecplot_print_2D(Interpol* Int1, const double& a,
 			{
 				double kk = 1.0;
 				if (razmer == true) kk = this->phys_param->Get_razmer("r");
-				fout << C(0) * kk << " " << C(1) * kk << " " << C(2) * kk;
+				fout << koord(0) * kk << " " << koord(1) * kk << " " << koord(2) * kk;
 			}
 
 			if (moove_system == false)
@@ -4025,8 +4026,9 @@ void Setka::Tecplot_print_2D(Interpol* Int1, const double& a,
 				Eigen::Vector3d VV(parameters["Vx"], parameters["Vy"], parameters["Vz"]);
 				Eigen::Vector3d VV1;
 
+				koord(2) = 0.0;
 				VV1 = 
-					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * VV + point.cross(C);
+					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * VV + point.cross(koord);
 
 				parameters["Vx"] = VV1[0];
 				parameters["Vy"] = VV1[1];
@@ -4215,6 +4217,111 @@ void Setka::Tecplot_print_2D(Interpol* Int1, const double& a,
 		fout.close();
 	}
 
+
+	cout << "End: Tecplot_print_2D " << name << endl;
+
+}
+
+void Setka::Tecplot_print_2D_dekard(Interpol* Int1, Eigen::Vector3d V1, Eigen::Vector3d V2,
+	double L1, double R1, double L2, double R2, string name, bool moove_system)
+{
+	string name_f = "Tecplot_Tecplot_print_dekard_2D_" + name + ".txt";
+
+	ofstream fout;
+	fout.open(name_f);
+	fout << "TITLE = HP" << endl;
+	fout << "VARIABLES = X, Y, Z";
+
+	for (auto& nam : Int1->param_names)
+	{
+		fout << ", " << nam;
+	}
+	fout << ", |V|, Mach, BB_8pi, V_perenos_x, V_perenos_y, V_perenos_z";
+	fout << endl;
+
+	Eigen::Vector3d C2;
+	std::unordered_map<string, double> parameters;
+	Cell_handle next_cell;
+	Cell_handle prev_cell = Cell_handle();
+	bool fine_int;
+
+
+	Eigen::Vector3d X;
+
+	for (double u = L1; u < R1; u = u + (R1 - L1) / 500.0)
+	{
+		for (double v = L2; v < R2; v = v + (R2 - L2) / 500.0)
+		{
+			X = u * V1 + v * V2;
+			Eigen::Vector3d koord = X;
+			Eigen::Vector3d rotate_velosity;
+			Eigen::Vector3d point(0.0, 0.0, this->phys_param->Omega);
+			double alpha;
+
+			if (moove_system == false)
+			{
+				alpha = this->phys_param->T_all * this->phys_param->Omega;
+				rotate_velosity = // Угловая скорость (как вектор)
+					rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * point;
+				koord = // Угловая скорость (как вектор)
+					 rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * X;
+			}
+
+			fine_int = Int1->Get_param(koord(0), koord(1), koord(2), parameters, prev_cell, next_cell);
+			if (fine_int == false) continue;
+
+			fout << X(0) << " " << X(1) << " " << X(2);
+
+			if (moove_system == false)
+			{
+				Eigen::Vector3d VV(parameters["Vx"], parameters["Vy"], parameters["Vz"]);
+				Eigen::Vector3d VV1;
+
+				X(2) = 0.0;
+				VV1 =
+					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * VV + point.cross(X);
+
+				parameters["Vx"] = VV1[0];
+				parameters["Vy"] = VV1[1];
+				parameters["Vz"] = VV1[2];
+
+			}
+
+
+			for (auto& nam : Int1->param_names)
+			{
+				fout << " " << parameters[nam];
+			}
+
+			short int zone = 1;
+			double rho_Th;
+			double p_Th;
+			double T_Th;
+
+			rho_Th = 0.0;
+			p_Th = 0.0;
+			T_Th = 0.0;
+
+			double kT = 1.0;
+			double kp = 1.0;
+			double krho = 1.0;
+
+			double VV = norm2(parameters["Vx"], parameters["Vy"], parameters["Vz"]);
+			double Mach = sqrt(parameters["rho"]) * norm2(parameters["Vx"], parameters["Vy"], parameters["Vz"]) /
+				sqrt(this->phys_param->gamma * parameters["p"]);
+			if (parameters["rho"] <= 0.0) Mach = 0.0;
+
+			fout << " " << VV << " " << Mach << " "
+				<< norm2(parameters["Bx"], parameters["By"], parameters["Bz"]) / (8.0 * const_pi) <<
+				" " << point.cross(X)[0] << " " << point.cross(X)[1] << " " << point.cross(X)[2];
+
+
+			fout << endl;
+
+		}
+	}
+
+	fout.close();
 
 	cout << "End: Tecplot_print_2D " << name << endl;
 

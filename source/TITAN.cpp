@@ -27,7 +27,7 @@ int main()
 
     //S1.Write_file_for_FCMHD();
     S1.Read_file_for_FCMHD();
-    // return 0;
+    //return 0;
 
     while (S1.phys_param->T_all < 0.0)
     {
@@ -64,9 +64,13 @@ int main()
     S1.Tecplot_print_2D_sphere(2, "Sphere_2", false, false);
 
 
+    S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(1.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.0, 0.0),
+        -3.0, 3.0, -3.0, 3.0, "_XY_", false);
+    S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.0),
+        -3.0, 3.0, -3.0, 3.0, "_YZ_", false);
 
-    S1.Tecplot_print_2D(&SS, 0.0, 0.0, 1.0, -0.00001, "XYZ_2d_(0, 0, 1, 0)_", false, false);
-    S1.Tecplot_print_2D(&SS, 0.0, 1.0, 0.0, -0.00001, "XYZ_2d_(0, 1, 0, 0)_", false, false);
+    //S1.Tecplot_print_2D(&SS, 0.0, 0.0, 1.0, -0.00001, "XYZ_2d_(0, 0, 1, 0)_", false, false);
+    //S1.Tecplot_print_2D(&SS, 0.0, 1.0, 0.0, -0.00001, "XYZ_2d_(0, 1, 0, 0)_", false, false);
 
     S1.Tecplot_print_2D(&SS, 0.0, 0.0, 1.0, -0.00001, "_2d_(0, 0, 1, 0)_");
     S1.Tecplot_print_2D(&SS, 0.0, 1.0, 0.0, -0.00001, "_2d_(0, 1, 0, 0)_");

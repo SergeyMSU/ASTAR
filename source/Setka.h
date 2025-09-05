@@ -316,5 +316,9 @@ public:
 		const double& c, const double& d,
 		string name, bool razmer = false, bool moove_system = true);
 	// Плоскость   a x + b y + c z + d = 0;
+
+	void Tecplot_print_2D_dekard(Interpol* Int1, Eigen::Vector3d V1, Eigen::Vector3d V2,
+		double L1, double R1, double L2, double R2, string name, bool moove_system);
+
 };
 
