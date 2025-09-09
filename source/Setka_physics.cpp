@@ -185,8 +185,8 @@ void Setka::Init_physics(void)
 				vec << x, y, z;
 				the = acos(vec(2) / r);
 
-				BR = -this->phys_param->B_0 * kv(this->phys_param->R_0 / r);
-				BPHI = -BR * sin(the) * (r / this->phys_param->R_0);
+				BR = 0.0; // -this->phys_param->B_0 * kv(this->phys_param->R_0 / r);
+				BPHI = 0.0;//-BR * sin(the) * (r / this->phys_param->R_0);
 
 				dekard_skorost(vec(2), vec(0), vec(1), BR, BPHI, 0.0, V3, V1, V2);
 
@@ -218,7 +218,7 @@ void Setka::Init_physics(void)
 				i->parameters[0]["Vy"] = mv * vec(1) / r;
 				i->parameters[0]["Vz"] = mv * vec(2) / r;
 
-				if (the > 0.0)
+				if (true)//(the > 0.0)
 				{
 					i->parameters[0]["Bx"] = vv(0);
 					i->parameters[0]["By"] = vv(1);
@@ -265,8 +265,8 @@ void Setka::Init_physics(void)
 					vec << x, y, z;
 					the = acos(vec(2) / r);
 
-					BR = -this->phys_param->B_0 * kv(this->phys_param->R_0 / r);
-					BPHI = -BR * sin(the) * (r / this->phys_param->R_0);
+					BR = 0.0; //-this->phys_param->B_0 * kv(this->phys_param->R_0 / r);
+					BPHI = 0.0;//-BR * sin(the) * (r / this->phys_param->R_0);
 
 					dekard_skorost(vec(2), vec(0), vec(1), BR, BPHI, 0.0, V3, V1, V2);
 
@@ -299,7 +299,7 @@ void Setka::Init_physics(void)
 					fout1 << the << " " << i->parameters["rho"] << " " <<
 						norm2(i->parameters["Vx"], i->parameters["Vy"], i->parameters["Vz"]) << endl;
 
-					if (the > 0.0)
+					if (true)//(the > 0.0)
 					{
 						i->parameters["Bx"] = vv(0);
 						i->parameters["By"] = vv(1);

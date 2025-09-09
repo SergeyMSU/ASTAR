@@ -89,7 +89,7 @@ public:
 	vector < vector<Gran*>> MK_Grans;
 	vector <double> MK_Potoks;  // Потоки через зоны (через вышеопределённые наборы граней)
 
-	Setka();
+	Setka(bool real = true);
 	~Setka();
 
 	void Algoritm(short int alg);
@@ -319,6 +319,9 @@ public:
 
 	void Tecplot_print_2D_dekard(Interpol* Int1, Eigen::Vector3d V1, Eigen::Vector3d V2,
 		double L1, double R1, double L2, double R2, string name, bool moove_system);
+
+	void Tecplot_print_spherik(Interpol* Int1, double R, 
+		int Nphi, int Ntheta, string name, bool moove_system);
 
 };
 

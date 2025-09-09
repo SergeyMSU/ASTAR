@@ -52,3 +52,7 @@ ASTAR/.vs/ASTAR/v17/.suo
 *.opendb
 
 .vs/ASTAR/v17/.suo
+
+*.pdf
+
+*.plt

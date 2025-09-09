@@ -6,9 +6,59 @@
 using namespace std;
 //class Setka;
 
+Eigen::Vector3d shortestVectorToAxis(const Eigen::Vector3d& point,
+    const Eigen::Vector3d& axisDirection) {
+    // Нормируем направляющий вектор оси
+    Eigen::Vector3d unitAxis = axisDirection.normalized();
+
+    // Находим проекцию точки на ось
+    double t = point.dot(unitAxis);
+    Eigen::Vector3d projection = t * unitAxis;
+
+    // Возвращаем вектор от проекции к точке (перпендикулярный оси)
+    return point - projection;
+}
+
 int main()
 {
+    /*Eigen::Vector3d X, V, Omega;
+    Eigen::Vector3d eX, eV, eOmega;
+    double alpha = const_pi/2;
+    double lambda = 0.0;
+    X << 1.0, 0.0, 0.0;
+    Omega << 0.0, 0.0, 0.9;
+    V = X * 3.0;
+
+    eX = rotationMatrixZ(alpha) * rotationMatrixX(lambda) * X;
+    cout << "eX = " << eX(0) << " " << eX(1) << " " << eX(2) << endl;
+    eOmega = rotationMatrixZ(alpha) * rotationMatrixX(lambda) * Omega;
+    eV = rotationMatrixZ(alpha) * rotationMatrixX(lambda) * V - eOmega.cross(shortestVectorToAxis(eX, eOmega));
+    cout << "eOmega = " << eOmega(0) << " " << eOmega(1) << " " << eOmega(2) << endl;
+    cout << "eV = " << eV(0) << " " << eV(1) << " " << eV(2) << endl;
+    cout << "V = " << V(0) << " " << V(1) << " " << V(2) << endl;
+
+    X(2) = 0.0;
+    V = rotationMatrixX(-lambda) * rotationMatrixZ(-alpha) * eV + Omega.cross(X);
+    cout << "V = " << V(0) << " " << V(1) << " " << V(2) << endl;
+
+    return 0;*/
+
+
     cout << "Start Programm" << endl;
+    if (false)
+    {
+        Interpol SS = Interpol("For_intertpolate_11.bin");
+
+        Setka S1 = Setka(false);
+        S1.phys_param->T_all = 50.0012;
+
+        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(1.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.0, 0.0),
+            -20.0, 20.0, -20.0, 20.0, "_XY_", false);
+        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.0),
+            -20.0, 20.0, -20.0, 20.0, "_YZ_", false);
+
+        return 0;
+    }
 
     Setka S1 = Setka();
     S1.Calculating_measure(0);
@@ -27,6 +77,8 @@ int main()
 
     //S1.Write_file_for_FCMHD();
     S1.Read_file_for_FCMHD();
+
+    cout << "S1.phys_param->T_all  " << S1.phys_param->T_all << endl;
     //return 0;
 
     while (S1.phys_param->T_all < 0.0)
@@ -51,23 +103,70 @@ int main()
 
     //S1.Save_cell_parameters("paramet_0002.bin");
 
+    // Для экономии памяти почистим некоторые массивы
+
     S1.Save_for_interpolate("For_intertpolate_11.bin", true);
+
+    if (true)
+    {
+        for (auto& i : S1.All_Yzel)
+        {
+            delete i;
+        }
+        S1.All_Yzel.clear();
+    }
+
     Interpol SS = Interpol("For_intertpolate_11.bin");
 
-    S1.Tecplot_print_2D_sphere(0, "move_Sphere_0", false, true);
-    S1.Tecplot_print_2D_sphere(0, "Sphere_0", false, false);
+    if (false)
+    {
+        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(1.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.0, 0.0),
+            -10.0, 10.0, -10.0, 10.0, "_XY_", false);
+        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.0),
+            -10.0, 10.0, -10.0, 10.0, "_YZ_", false);
 
-    S1.Tecplot_print_2D_sphere(1, "move_Sphere_1", false, true);
-    S1.Tecplot_print_2D_sphere(1, "Sphere_1", false, false);
+        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(1.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.0, 0.0),
+            -10.0, 10.0, -10.0, 10.0, "_XY_move_", true);
+        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.0),
+            -10.0, 10.0, -10.0, 10.0, "_YZ_move_", true);
 
-    S1.Tecplot_print_2D_sphere(2, "move_Sphere_2", false, true);
-    S1.Tecplot_print_2D_sphere(2, "Sphere_2", false, false);
+        S1.Tecplot_print_spherik(&SS, 1.0, 200, 100, "move_Sphere_1ae", true);
+        S1.Tecplot_print_spherik(&SS, 1.0, 200, 100, "Sphere_1ae", false);
+
+        S1.Tecplot_print_spherik(&SS, 5.0, 200, 100, "move_Sphere_5ae", true);
+        S1.Tecplot_print_spherik(&SS, 5.0, 200, 100, "Sphere_5ae", false);
+
+        S1.Tecplot_print_spherik(&SS, 9.5, 200, 100, "move_Sphere_9.5ae", true);
+        S1.Tecplot_print_spherik(&SS, 9.5, 200, 100, "Sphere_9.5ae", false);
+    }
+    else
+    {
+        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(1.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.0, 0.0),
+            -5.0, 5.0, -5.0, 5.0, "_XY_", false);
+        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.0),
+            -5.0, 5.0, -5.0, 5.0, "_YZ_", false);
+
+        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(1.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.0, 0.0),
+            -5.0, 5.0, -5.0, 5.0, "_XY_move_", true);
+        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.0),
+            -5.0, 5.0, -5.0, 5.0, "_YZ_move_", true);
+
+        S1.Tecplot_print_spherik(&SS, 1.0, 200, 100, "move_Sphere_1ae", true);
+        S1.Tecplot_print_spherik(&SS, 1.0, 200, 100, "Sphere_1ae", false);
+
+        S1.Tecplot_print_spherik(&SS, 2.0, 200, 100, "move_Sphere_2ae", true);
+        S1.Tecplot_print_spherik(&SS, 2.0, 200, 100, "Sphere_2ae", false);
+
+        S1.Tecplot_print_spherik(&SS, 4.5, 200, 100, "move_Sphere_4.5ae", true);
+        S1.Tecplot_print_spherik(&SS, 4.5, 200, 100, "Sphere_4.5ae", false);
+    }
+
+    return 0;
+
+    
 
 
-    S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(1.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.0, 0.0),
-        -3.0, 3.0, -3.0, 3.0, "_XY_", false);
-    S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.0),
-        -3.0, 3.0, -3.0, 3.0, "_YZ_", false);
+   
 
     //S1.Tecplot_print_2D(&SS, 0.0, 0.0, 1.0, -0.00001, "XYZ_2d_(0, 0, 1, 0)_", false, false);
     //S1.Tecplot_print_2D(&SS, 0.0, 1.0, 0.0, -0.00001, "XYZ_2d_(0, 1, 0, 0)_", false, false);
@@ -78,7 +177,7 @@ int main()
     S1.Tecplot_print_1D(&SS, Eigen::Vector3d(0.0, 0.0, 0.0),
         Eigen::Vector3d(1.0, 0.0, 0.0), "_(1, 0, 0)_", 25.0);
 
-    return 0;
+    
 
 
     //S1.Download_cell_parameters("parameters_promeg_116.bin");

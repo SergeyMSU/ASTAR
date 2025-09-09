@@ -73,12 +73,15 @@
 
 using namespace std;
 
-Setka::Setka()
+Setka::Setka(bool real)
 {
 	this->Surf1 = nullptr;
 	this->geo = new Geo_param();
 	this->phys_param = new Phys_param();
 	Luch::geo = this->geo;
+
+	if (real == false) return;
+
 	// ! Это число зависит от сетки триангуляции круга (сколько там вращений по углу она подразумевает)
 	//cout << "AAAAAAAAAAAAAAAAAAAAA " << endl;
 	this->All_name_luch["A_Luch"] = &this->A_Luch;
@@ -909,7 +912,7 @@ void Setka::New_initial()
 	double x, y;
 
 	// Считываем файл круга
-	ifstream fin("SDK1_krug_setka.bin", ios::binary | ios::in);
+	ifstream fin("SDK1_krug_setka.bin", ios::binary | ios::in);  // SDK1_krug_setka
 	if (!fin)
 	{
 		cout << "Net takogo fajla (fajl setki v krugu)" << endl;
@@ -987,6 +990,7 @@ void Setka::New_initial()
 	if (num_gr.size() != this->geo->Nphi)
 	{
 		cout << "Error 93it9hgirnig" << endl;
+		cout << num_gr.size() << " " << this->geo->Nphi << endl;
 		exit(-1);
 	}
 
@@ -1328,163 +1332,199 @@ void Setka::New_initial()
 	cout << "---END New_initial---" << endl;
 }
 
+struct GranHash {
+	size_t operator()(const Gran* g) const {
+		// Создаем хэш на основе отсортированных ID узлов
+		std::vector<int> ids;
+		for (auto yzel : g->yzels) ids.push_back(yzel->number);
+		std::sort(ids.begin(), ids.end());
+		size_t seed = 0;
+		for (int id : ids) {
+			seed ^= std::hash<int>()(id) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		}
+		return seed;
+	}
+};
+
+struct GranEqual {
+	bool operator()(const Gran* a, const Gran* b) const {
+		// 1. Если количество узлов разное, грани не равны
+		if (a->yzels.size() != b->yzels.size()) {
+			return false;
+		}
+
+		// 2. Собираем номера узлов из обеих граней
+		std::vector<int> a_ids, b_ids;
+		for (auto* yzel : a->yzels) a_ids.push_back(yzel->number);
+		for (auto* yzel : b->yzels) b_ids.push_back(yzel->number);
+
+		// 3. Сортируем для независимости от порядка
+		std::sort(a_ids.begin(), a_ids.end());
+		std::sort(b_ids.begin(), b_ids.end());
+
+		// 4. Сравниваем отсортированные вектора
+		return a_ids == b_ids;
+	}
+};
+
 void Setka::New_connect()
 {
 	// План следующий: сначала создаём для каждой ячейки 6 граней
 	// Потом находим повторы, удаляем лишние и связываем грани с ячейками
 	// Для ускорения удаления и т.д. сначала всё делаем в локально созданном списке, потом перенесём всё в вектор
-
-	cout << "START: New_connect" << endl;
-	vector<Gran*> All_gran_;
-	std::unordered_set<int> number_gran_for_delete;
-
-	All_gran_.reserve(this->All_Cell.size() * 6);
-
 	this->Renumerate();
+	cout << "START: New_connect" << endl;
+
+	//std::unordered_set<Gran*, GranHash> unique_grans;
+	std::unordered_set<Gran*, GranHash, GranEqual> unique_grans;
+	
 
 	// Создаём все грани
 	for (auto& i : this->All_Cell)
 	{
-		/*if (i->number == 118)
-		{
-			cout << "Find" << endl;
-		}*/
 		auto G = new Gran();
 		G->yzels.push_back(i->yzels[0]); // 1
 		G->yzels.push_back(i->yzels[3]); // 4
 		G->yzels.push_back(i->yzels[2]); // 3
 		G->yzels.push_back(i->yzels[1]); // 2
-		All_gran_.push_back(G);
-		G->cells.push_back(i);
+
+		auto it = unique_grans.find(G);
+		if (it == unique_grans.end()) {
+			// Дубликата нет, добавляем
+			unique_grans.insert(G);
+			// Добавляем ячейку к грани
+			G->cells.push_back(i);
+		}
+		else
+		{
+			// Дубликат найден, добавляем ячейку к существующей грани
+			(*it)->cells.push_back(i);
+			delete G; // Удаляем временную грань
+		}
+
 
 		G = new Gran();
 		G->yzels.push_back(i->yzels[4]); // 5
 		G->yzels.push_back(i->yzels[5]); // 6
 		G->yzels.push_back(i->yzels[6]); // 7
 		G->yzels.push_back(i->yzels[7]); // 8
-		All_gran_.push_back(G);
-		G->cells.push_back(i);
+		
+		it = unique_grans.find(G);
+		if (it == unique_grans.end()) {
+			// Дубликата нет, добавляем
+			unique_grans.insert(G);
+			// Добавляем ячейку к грани
+			G->cells.push_back(i);
+		}
+		else
+		{
+			// Дубликат найден, добавляем ячейку к существующей грани
+			(*it)->cells.push_back(i);
+			delete G; // Удаляем временную грань
+		}
+
 
 		G = new Gran();
 		G->yzels.push_back(i->yzels[0]); // 1
 		G->yzels.push_back(i->yzels[1]); // 2
 		G->yzels.push_back(i->yzels[5]); // 6
 		G->yzels.push_back(i->yzels[4]); // 5
-		All_gran_.push_back(G);
-		G->cells.push_back(i);
+		
+		it = unique_grans.find(G);
+		if (it == unique_grans.end()) {
+			// Дубликата нет, добавляем
+			unique_grans.insert(G);
+			// Добавляем ячейку к грани
+			G->cells.push_back(i);
+		}
+		else
+		{
+			// Дубликат найден, добавляем ячейку к существующей грани
+			(*it)->cells.push_back(i);
+			delete G; // Удаляем временную грань
+		}
+
 
 		G = new Gran();
 		G->yzels.push_back(i->yzels[2]); // 3
 		G->yzels.push_back(i->yzels[3]); // 4
 		G->yzels.push_back(i->yzels[7]); // 8
 		G->yzels.push_back(i->yzels[6]); // 7
-		All_gran_.push_back(G);
-		G->cells.push_back(i);
+		
+		it = unique_grans.find(G);
+		if (it == unique_grans.end()) {
+			// Дубликата нет, добавляем
+			unique_grans.insert(G);
+			// Добавляем ячейку к грани
+			G->cells.push_back(i);
+		}
+		else
+		{
+			// Дубликат найден, добавляем ячейку к существующей грани
+			(*it)->cells.push_back(i);
+			delete G; // Удаляем временную грань
+		}
+
 
 		G = new Gran();
 		G->yzels.push_back(i->yzels[1]); // 2
 		G->yzels.push_back(i->yzels[2]); // 3
 		G->yzels.push_back(i->yzels[6]); // 7
 		G->yzels.push_back(i->yzels[5]); // 6
-		All_gran_.push_back(G);
-		G->cells.push_back(i);
+		
+		it = unique_grans.find(G);
+		if (it == unique_grans.end()) {
+			// Дубликата нет, добавляем
+			unique_grans.insert(G);
+			// Добавляем ячейку к грани
+			G->cells.push_back(i);
+		}
+		else
+		{
+			// Дубликат найден, добавляем ячейку к существующей грани
+			(*it)->cells.push_back(i);
+			delete G; // Удаляем временную грань
+		}
+
 
 		G = new Gran();
 		G->yzels.push_back(i->yzels[0]); // 1
 		G->yzels.push_back(i->yzels[4]); // 5
 		G->yzels.push_back(i->yzels[7]); // 8
 		G->yzels.push_back(i->yzels[3]); // 4
-		All_gran_.push_back(G);
-		G->cells.push_back(i);
+		
+		it = unique_grans.find(G);
+		if (it == unique_grans.end()) {
+			// Дубликата нет, добавляем
+			unique_grans.insert(G);
+			// Добавляем ячейку к грани
+			G->cells.push_back(i);
+		}
+		else
+		{
+			// Дубликат найден, добавляем ячейку к существующей грани
+			(*it)->cells.push_back(i);
+			delete G; // Удаляем временную грань
+		}
+
 	}
+
+	// Переносим уникальные грани в All_Gran
+	for (auto gran : unique_grans) 
+	{
+		All_Gran.push_back(gran);
+	}
+
 	// Сдесь было наделано много лишних граней
 
 	// Удаляем дубликаты граней
 
-	// Пробегаемся по всем граням и связываем узлы с гранями
-	for (auto& i : All_gran_)
-	{
-		for (auto& j : i->yzels)
-		{
-			j->grans.push_back(i);
-		}
-	}
-
 	// нумеруем все грани (для того, чтобы запомнить, какие надо удалить)
 	int kkk = 0;
-	for (auto& i : All_gran_)
+	for (auto& i : All_Gran)
 	{
 		i->number = kkk;
 		kkk++;
-	}
-
-	//пробегаемся по всем узлам и вычисляем грани, которые нужно удалить
-	kkk = 0;
-	for (auto& i : this->All_Yzel)
-	{
-		/*if (kkk % 5000 == 0)
-		{
-			cout << kkk << "   from  " << this->All_Yzel.size() << endl;
-		}*/
-		for (int j = 0; j < i->grans.size(); j++)
-		{
-			for (int k = j + 1; k < i->grans.size(); k++)
-			{
-				if (areCellsEqual_my(i->grans[j], i->grans[k]) == true)
-				{
-					auto A1 = number_gran_for_delete.find(i->grans[j]->number);
-					auto A2 = number_gran_for_delete.find(i->grans[k]->number);
-
-					if (A1 == number_gran_for_delete.end() && A2 == number_gran_for_delete.end())
-					{
-						number_gran_for_delete.insert(i->grans[k]->number);
-						i->grans[j]->cells.push_back(i->grans[k]->cells[0]);
-					}
-				}
-			}
-		}
-		kkk++;
-	}
-
-	// теперь надо удалить все лишние грани и создать новые
-	for (auto& i : All_gran_)
-	{
-		// Если грань не надо удалять, сохраняем её
-		if(number_gran_for_delete.find(i->number) == number_gran_for_delete.end())
-		{
-			auto G = new Gran();
-			for (auto& j : i->yzels)
-			{
-				G->yzels.push_back(j);
-			}
-			for (auto& j : i->cells)
-			{
-				G->cells.push_back(j);
-			}
-			this->All_Gran.push_back(G);
-		}
-		delete i;
-	}
-
-
-
-	number_gran_for_delete.clear();
-	All_gran_.clear();
-	All_gran_.resize(0);
-
-	// нумеруем все грани
-	kkk = 0;
-	for (auto& i : this->All_Gran)
-	{
-		i->number = kkk;
-		kkk++;
-	}
-
-	// чистим старые грани в узлах
-	for (auto& i : this->All_Yzel)
-	{
-		i->grans.clear();
-		i->grans.reserve(12);
 	}
 
 	// Пробегаемся по всем граням и связываем узлы с гранями
@@ -1495,6 +1535,7 @@ void Setka::New_connect()
 			j->grans.push_back(i);
 		}
 	}
+
 
 	// Пробегаемся по всем граням и связываем грани с ячейками
 	for (auto& i : this->All_Gran)
@@ -1505,11 +1546,8 @@ void Setka::New_connect()
 		}
 	}
 
-	/*if (this->Test_geometr() == false)
-	{
-		this->~Setka();
-		std::exit(EXIT_FAILURE);
-	}*/
+	unique_grans.clear();
+
 	cout << "END: New_connect" << endl;
 
 }
@@ -1930,9 +1968,9 @@ void Setka::Read_file_for_FCMHD(void)
 {
 	this->Renumerate();
 
-	std::ifstream file("FCMHD_3_out.bin", std::ios::binary);
+	std::ifstream file("FCMHD_1.10_out.bin", std::ios::binary);
 	if (!file.is_open()) {
-		throw std::runtime_error("Error opening file: FCMHD_3_out.bin");
+		throw std::runtime_error("Error opening file: FCMHD_1.8_out.bin");
 	}
 
 	int n1 = this->All_Cell.size();
@@ -4248,9 +4286,9 @@ void Setka::Tecplot_print_2D_dekard(Interpol* Int1, Eigen::Vector3d V1, Eigen::V
 
 	Eigen::Vector3d X;
 
-	for (double u = L1; u < R1; u = u + (R1 - L1) / 500.0)
+	for (double u = L1; u < R1; u = u + (R1 - L1) / 1000.0)
 	{
-		for (double v = L2; v < R2; v = v + (R2 - L2) / 500.0)
+		for (double v = L2; v < R2; v = v + (R2 - L2) / 1000.0)
 		{
 			X = u * V1 + v * V2;
 			Eigen::Vector3d koord = X;
@@ -4262,9 +4300,9 @@ void Setka::Tecplot_print_2D_dekard(Interpol* Int1, Eigen::Vector3d V1, Eigen::V
 			{
 				alpha = this->phys_param->T_all * this->phys_param->Omega;
 				rotate_velosity = // Угловая скорость (как вектор)
-					rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * point;
+					 rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * point;
 				koord = // Угловая скорость (как вектор)
-					 rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * X;
+					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * X;
 			}
 
 			fine_int = Int1->Get_param(koord(0), koord(1), koord(2), parameters, prev_cell, next_cell);
@@ -4279,12 +4317,18 @@ void Setka::Tecplot_print_2D_dekard(Interpol* Int1, Eigen::Vector3d V1, Eigen::V
 
 				X(2) = 0.0;
 				VV1 =
-					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * VV + point.cross(X);
+					 rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * VV + point.cross(X);
 
 				parameters["Vx"] = VV1[0];
 				parameters["Vy"] = VV1[1];
 				parameters["Vz"] = VV1[2];
 
+				VV << parameters["Bx"], parameters["By"], parameters["Bz"];
+				VV1 =
+					rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * VV;
+				parameters["Bx"] = VV1[0];
+				parameters["By"] = VV1[1];
+				parameters["Bz"] = VV1[2];
 			}
 
 
@@ -4328,6 +4372,121 @@ void Setka::Tecplot_print_2D_dekard(Interpol* Int1, Eigen::Vector3d V1, Eigen::V
 }
 
 
+void Setka::Tecplot_print_spherik(Interpol* Int1, double R, int Nphi, int Ntheta, string name, bool moove_system)
+{
+	string name_f = "Tecplot_Tecplot_print_dekard_2D_" + name + ".txt";
+
+	ofstream fout;
+	fout.open(name_f);
+	fout << "TITLE = HP" << endl;
+	fout << "VARIABLES = phi, the";
+
+	for (auto& nam : Int1->param_names)
+	{
+		fout << ", " << nam;
+	}
+	fout << ", |V|, Mach, BB_8pi, V_perenos_x, V_perenos_y, V_perenos_z";
+	fout << endl;
+
+	Eigen::Vector3d C2;
+	std::unordered_map<string, double> parameters;
+	Cell_handle next_cell;
+	Cell_handle prev_cell = Cell_handle();
+	bool fine_int;
+
+
+	Eigen::Vector3d X;
+	
+
+	for (double phi = 0.0; phi < 2.0 * const_pi; phi = phi + 2.0 * const_pi/ Nphi)
+	{
+		for (double the = 0.0; the <= const_pi; the = the + const_pi / Ntheta)
+		{
+			X(0) = R * sin(the) * cos(phi);
+			X(1) = R * sin(the) * sin(phi);
+			X(2) = R * cos(the);
+			Eigen::Vector3d koord = X;
+			Eigen::Vector3d rotate_velosity;
+			Eigen::Vector3d point(0.0, 0.0, this->phys_param->Omega);
+			double alpha;
+
+			if (moove_system == false)
+			{
+				alpha = this->phys_param->T_all * this->phys_param->Omega;
+				rotate_velosity = // Угловая скорость (как вектор)
+					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * point;
+				koord = // Угловая скорость (как вектор)
+					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * X;
+			}
+
+			fine_int = Int1->Get_param(koord(0), koord(1), koord(2), parameters, prev_cell, next_cell);
+			if (fine_int == false) continue;
+
+			fout << phi << " " << the;
+
+			if (moove_system == false)
+			{
+				Eigen::Vector3d VV(parameters["Vx"], parameters["Vy"], parameters["Vz"]);
+				Eigen::Vector3d VV1;
+
+				X(2) = 0.0;
+				VV1 =
+					rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * VV + point.cross(X);
+
+				parameters["Vx"] = VV1[0];
+				parameters["Vy"] = VV1[1];
+				parameters["Vz"] = VV1[2];
+
+				VV << parameters["Bx"], parameters["By"], parameters["Bz"];
+				VV1 =
+					rotationMatrixZ(alpha) * rotationMatrixX(this->phys_param->lambda) * VV;
+				parameters["Bx"] = VV1[0];
+				parameters["By"] = VV1[1];
+				parameters["Bz"] = VV1[2];
+			}
+
+
+			for (auto& nam : Int1->param_names)
+			{
+				fout << " " << parameters[nam];
+			}
+
+			short int zone = 1;
+			double rho_Th;
+			double p_Th;
+			double T_Th;
+
+			rho_Th = 0.0;
+			p_Th = 0.0;
+			T_Th = 0.0;
+
+			double kT = 1.0;
+			double kp = 1.0;
+			double krho = 1.0;
+
+			double VV = norm2(parameters["Vx"], parameters["Vy"], parameters["Vz"]);
+			double Mach = sqrt(parameters["rho"]) * norm2(parameters["Vx"], parameters["Vy"], parameters["Vz"]) /
+				sqrt(this->phys_param->gamma * parameters["p"]);
+			if (parameters["rho"] <= 0.0) Mach = 0.0;
+
+			fout << " " << VV << " " << Mach << " "
+				<< norm2(parameters["Bx"], parameters["By"], parameters["Bz"]) / (8.0 * const_pi) <<
+				" " << point.cross(X)[0] << " " << point.cross(X)[1] << " " << point.cross(X)[2];
+
+
+			fout << endl;
+
+		}
+	}
+
+	fout.close();
+
+	cout << "End: Tecplot_print_2D " << name << endl;
+
+}
+
+
+
 void Setka::Tecplot_print_2D_sphere(int SS, string name, bool razmer, bool moove_system)
 {
 	ofstream fout;
@@ -4366,15 +4525,15 @@ void Setka::Tecplot_print_2D_sphere(int SS, string name, bool razmer, bool moove
 			//Eigen::Vector3d C0 = C;
 			Eigen::Vector3d koord;
 			Eigen::Vector3d rotate_velosity;
-			Eigen::Vector3d point;
+			Eigen::Vector3d point(0.0, 0.0, this->phys_param->Omega);
 			double alpha;
 			if (moove_system == false)
 			{
 				alpha = this->phys_param->T_all * this->phys_param->Omega;
-				point << 0.0, 0.0, this->phys_param->Omega;
-				rotate_velosity = rotationMatrixX(this->phys_param->lambda) * // Угловая скорость (как вектор)
-					rotationMatrixZ(alpha) * point;
-				koord = rotationMatrixZ(-alpha) * rotationMatrixX(-this->phys_param->lambda) * C;
+				rotate_velosity = // Угловая скорость (как вектор)
+					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * point;
+				koord = // Угловая скорость (как вектор)
+					rotationMatrixX(-this->phys_param->lambda) * rotationMatrixZ(-alpha) * C;
 
 				C = koord;
 			}
