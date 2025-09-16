@@ -1968,7 +1968,7 @@ void Setka::Read_file_for_FCMHD(void)
 {
 	this->Renumerate();
 
-	std::ifstream file("FCMHD_1.10_out.bin", std::ios::binary);
+	std::ifstream file("FCMHD_3.0_out.bin", std::ios::binary);
 	if (!file.is_open()) {
 		throw std::runtime_error("Error opening file: FCMHD_1.8_out.bin");
 	}

@@ -118,26 +118,30 @@ int main()
 
     Interpol SS = Interpol("For_intertpolate_11.bin");
 
-    if (false)
+    if (true)
     {
         S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(1.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.0, 0.0),
-            -10.0, 10.0, -10.0, 10.0, "_XY_", false);
+            -10.0, 10.0, -10.0, 10.0, "_XY_", true);
         S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.0),
-            -10.0, 10.0, -10.0, 10.0, "_YZ_", false);
+            -10.0, 10.0, -10.0, 10.0, "_YZ_", true);
 
-        S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(1.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.0, 0.0),
+        /*S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(1.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.0, 0.0),
             -10.0, 10.0, -10.0, 10.0, "_XY_move_", true);
         S1.Tecplot_print_2D_dekard(&SS, Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.0),
-            -10.0, 10.0, -10.0, 10.0, "_YZ_move_", true);
+            -10.0, 10.0, -10.0, 10.0, "_YZ_move_", true);*/
 
-        S1.Tecplot_print_spherik(&SS, 1.0, 200, 100, "move_Sphere_1ae", true);
-        S1.Tecplot_print_spherik(&SS, 1.0, 200, 100, "Sphere_1ae", false);
+        S1.Tecplot_print_spherik(&SS, 0.2, 200, 100, "Sphere_0.2ae", true);
 
-        S1.Tecplot_print_spherik(&SS, 5.0, 200, 100, "move_Sphere_5ae", true);
-        S1.Tecplot_print_spherik(&SS, 5.0, 200, 100, "Sphere_5ae", false);
+        //S1.Tecplot_print_spherik(&SS, 1.0, 200, 100, "move_Sphere_1ae", true);
+        S1.Tecplot_print_spherik(&SS, 1.0, 200, 100, "Sphere_1ae", true);
 
-        S1.Tecplot_print_spherik(&SS, 9.5, 200, 100, "move_Sphere_9.5ae", true);
-        S1.Tecplot_print_spherik(&SS, 9.5, 200, 100, "Sphere_9.5ae", false);
+        S1.Tecplot_print_spherik(&SS, 3.0, 200, 100, "Sphere_3ae", true);
+
+        //S1.Tecplot_print_spherik(&SS, 5.0, 200, 100, "move_Sphere_5ae", true);
+        S1.Tecplot_print_spherik(&SS, 5.0, 200, 100, "Sphere_5ae", true);
+
+        //S1.Tecplot_print_spherik(&SS, 9.5, 200, 100, "move_Sphere_9.5ae", true);
+        S1.Tecplot_print_spherik(&SS, 9.5, 200, 100, "Sphere_9.5ae", true);
     }
     else
     {
