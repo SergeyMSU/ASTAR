@@ -912,7 +912,7 @@ void Setka::New_initial()
 	double x, y;
 
 	// Считываем файл круга
-	ifstream fin("SDK1_krug_setka.bin", ios::binary | ios::in);  // SDK1_krug_setka
+	ifstream fin("SDK2_krug_setka.bin", ios::binary | ios::in);  // SDK1_krug_setka
 	if (!fin)
 	{
 		cout << "Net takogo fajla (fajl setki v krugu)" << endl;
